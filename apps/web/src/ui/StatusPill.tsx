@@ -1,9 +1,11 @@
-import type { WignerBackend } from "../gpu/useWignerField";
+import { type WignerBackend, wignerMode } from "../gpu/useWignerField";
 import type { RendererStatus } from "../scene/renderSettings";
 
 interface StatusPillProps {
   renderer: RendererStatus;
   backend: WignerBackend;
+  /** WebGPU is available but failed the startup self-test against the CPU. */
+  gpuRejected: boolean;
 }
 
 const rendererLabels: Record<RendererStatus, string> = {
@@ -18,11 +20,15 @@ const backendLabels: Record<WignerBackend, string> = {
   cpu: "Wigner on CPU",
 };
 
+/** Suffix shown when `?wigner=` overrides the automatic backend choice. */
+const modeSuffix = wignerMode === "gpu" ? "" : ` (${wignerMode})`;
+
 /** Discreet indicator of the 3D renderer and of where the Wigner function is computed. */
-export function StatusPill({ renderer, backend }: StatusPillProps) {
+export function StatusPill({ renderer, backend, gpuRejected }: StatusPillProps) {
   const rendererOk = renderer === "webgl2";
+  const cpuReason = gpuRejected ? " WebGPU gave wrong values on this GPU and was disabled." : "";
   const title = rendererOk
-    ? `3D rendered with WebGL 2. ${backend === "gpu" ? "Wigner function computed by a WebGPU compute shader." : "Wigner function computed on the CPU."}`
+    ? `3D rendered with WebGL 2. ${backend === "gpu" ? "Wigner function computed by a WebGPU compute shader." : `Wigner function computed on the CPU.${cpuReason}`}`
     : "3D rendering unavailable";
   return (
     <div
@@ -35,7 +41,10 @@ export function StatusPill({ renderer, backend }: StatusPillProps) {
       />
       <span>{rendererLabels[renderer]}</span>
       <span className="text-slate">·</span>
-      <span className={backend === "gpu" ? "text-signal" : ""}>{backendLabels[backend]}</span>
+      <span className={backend === "gpu" ? "text-signal" : ""}>
+        {backendLabels[backend]}
+        {gpuRejected ? " (WebGPU result rejected)" : modeSuffix}
+      </span>
     </div>
   );
 }

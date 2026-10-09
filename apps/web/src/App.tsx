@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CPU_RESOLUTION, useWignerField } from "./gpu/useWignerField";
+import { CPU_RESOLUTION, GPU_RESOLUTION, useWignerField, wignerMode } from "./gpu/useWignerField";
 import { defaultRenderSettings, type RendererStatus } from "./scene/renderSettings";
 import { Scene } from "./scene/Scene";
 import { SceneErrorBoundary } from "./scene/SceneErrorBoundary";
@@ -43,7 +43,7 @@ function phaseSpaceExtent(parameters: CatParameters, state: InitialState): numbe
 const firstStep = tutorialSteps[0] as TutorialStep;
 
 export function App() {
-  const { ready, frame, error, send } = useSimulation();
+  const { ready, frame, error, send, requestGpuSelfTest } = useSimulation();
   const [stepIndex, setStepIndex] = useState(0);
   const [parameters, setParameters] = useState(firstStep.setup.parameters);
   const [dimension, setDimension] = useState(
@@ -58,7 +58,7 @@ export function App() {
   const wide = useMediaQuery("(min-width: 1024px)");
 
   const extent = phaseSpaceExtent(parameters, reset.state);
-  const { backend, field } = useWignerField(frame, extent);
+  const { backend, gpuRejected, field } = useWignerField(frame, extent, requestGpuSelfTest);
   const { curve, pending } = useFlipTimes(ALPHA_SWEEP, parameters);
 
   useEffect(() => {
@@ -82,6 +82,9 @@ export function App() {
   useEffect(() => {
     if (ready && backend === "cpu") {
       send({ type: "cpuWigner", request: { resolution: CPU_RESOLUTION, extent } });
+    } else if (ready && backend === "gpu" && wignerMode === "diagnose") {
+      // CPU reference on the GPU grid, compared frame by frame in useWignerField.
+      send({ type: "cpuWigner", request: { resolution: GPU_RESOLUTION, extent } });
     }
   }, [ready, backend, extent, send]);
 
@@ -127,7 +130,7 @@ export function App() {
           Cat Qubit{" "}
           <span className="text-signal [text-shadow:0_0_18px_var(--color-signal)]">Lab</span>
         </h1>
-        <StatusPill renderer={renderer} backend={backend} />
+        <StatusPill renderer={renderer} backend={backend} gpuRejected={gpuRejected} />
       </header>
 
       {error && (

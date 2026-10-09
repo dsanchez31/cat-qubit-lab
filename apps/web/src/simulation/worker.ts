@@ -114,6 +114,29 @@ function handle(command: WorkerCommand) {
         postFrame(simulation);
       }
       break;
+    case "gpuSelfTest": {
+      const { requestId, request } = command;
+      let sim: CatSimulation | null = null;
+      try {
+        sim = new CatSimulation(request.dimension, request.alpha, 0, 0, 0);
+        sim.resetCat(request.alpha, 0, true);
+        const reference = {
+          ...request,
+          densityMatrix: sim.densityMatrix(),
+          wigner: sim.wigner(request.resolution, request.extent),
+        };
+        post({ type: "gpuSelfTest", requestId, reference }, [
+          reference.densityMatrix.buffer,
+          reference.wigner.buffer,
+        ]);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        post({ type: "gpuSelfTest", requestId, reference: null, error: message });
+      } finally {
+        sim?.free();
+      }
+      break;
+    }
     case "flipTimes": {
       const { requestId, alphas, kappa1, kappa2, kappaPhi } = command;
       const pairs = flipTimes(alphas, kappa1, kappa2, kappaPhi);
