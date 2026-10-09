@@ -1,0 +1,26 @@
+{
+  "name": "cat-qubit-lab",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://dsanchez31.github.io/cat-qubit-lab/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dsanchez31/cat-qubit-lab.git"
+  },
+  "packageManager": "pnpm@12.9.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build:wasm": "wasm-pack build crates/physics-wasm --target web --release",
+    "dev": "pnpm --filter @cat-qubit-lab/web dev",
+    "build": "pnpm --filter @cat-qubit-lab/web build",
+    "typecheck": "pnpm --filter @cat-qubit-lab/web typecheck",
+    "check": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15"
+  }
+}

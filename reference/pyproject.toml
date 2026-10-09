@@ -1,0 +1,34 @@
+[project]
+name = "cat-reference"
+version = "0.1.0"
+description = "dynamiqs reference data for the cat-qubit-physics test suite"
+license = "Apache-2.0"
+# Python 3.14 is required by dynamiqs 0.3.6 with jax >= 0.11.1 (dynamiqs#1140, fixed by
+# dynamiqs#1145, not yet released): earlier versions reject `UnionType | "str"` at import.
+# Lower the bound once a dynamiqs release includes the fix.
+requires-python = ">=3.14"
+dependencies = [
+    "dynamiqs==0.3.6",
+    "numpy==2.5.3",
+]
+
+[project.urls]
+Homepage = "https://dsanchez31.github.io/cat-qubit-lab/"
+Repository = "https://github.com/dsanchez31/cat-qubit-lab"
+
+[project.scripts]
+generate = "cat_reference.generate:main"
+
+[dependency-groups]
+dev = ["ruff==0.16.10"]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "NPY", "RUF"]

@@ -1,0 +1,19 @@
+[package]
+name = "cat-qubit-physics-wasm"
+description = "WebAssembly bindings of cat-qubit-physics"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cat-qubit-physics.workspace = true
+wasm-bindgen.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,59 @@
+{
+ "generator": "dynamiqs 0.3.6",
+ "cases": [
+  {
+   "alpha": 1.0,
+   "kappa1": 0.01,
+   "kappa2": 1.0,
+   "kappa_phi": 0.0,
+   "dimension": 19,
+   "bit_flip_time": 2564.937009571729,
+   "phase_flip_time": 48.43160599357671
+  },
+  {
+   "alpha": 1.0,
+   "kappa1": 0.01,
+   "kappa2": 1.0,
+   "kappa_phi": 0.001,
+   "dimension": 19,
+   "bit_flip_time": 1499.7987906943445,
+   "phase_flip_time": 48.4580979443158
+  },
+  {
+   "alpha": 1.5,
+   "kappa1": 0.01,
+   "kappa2": 1.0,
+   "kappa_phi": 0.0,
+   "dimension": 24,
+   "bit_flip_time": 140752.8099921643,
+   "phase_flip_time": 22.27344051208718
+  },
+  {
+   "alpha": 1.5,
+   "kappa1": 0.01,
+   "kappa2": 1.0,
+   "kappa_phi": 0.001,
+   "dimension": 24,
+   "bit_flip_time": 17321.3976777323,
+   "phase_flip_time": 22.280398644735797
+  },
+  {
+   "alpha": 2.0,
+   "kappa1": 0.01,
+   "kappa2": 1.0,
+   "kappa_phi": 0.0,
+   "dimension": 28,
+   "bit_flip_time": 20274412.930347133,
+   "phase_flip_time": 12.51680373180983
+  },
+  {
+   "alpha": 2.0,
+   "kappa1": 0.01,
+   "kappa2": 1.0,
+   "kappa_phi": 0.001,
+   "dimension": 28,
+   "bit_flip_time": 358040.09672586457,
+   "phase_flip_time": 12.518664611458108
+  }
+ ]
+}

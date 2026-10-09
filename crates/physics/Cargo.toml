@@ -1,0 +1,19 @@
+[package]
+name = "cat-qubit-physics"
+description = "Lindblad dynamics, Wigner function and flip times of a dissipative cat qubit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+num-complex.workspace = true
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

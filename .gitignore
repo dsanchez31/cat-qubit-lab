@@ -1,0 +1,18 @@
+# Rust
+/target/
+/crates/physics-wasm/pkg/
+
+# Node
+node_modules/
+/apps/web/dist/
+
+# Python
+/reference/.venv/
+__pycache__/
+.ruff_cache/
+
+# Local tooling
+/.claude/
+.idea/
+.vscode/
+.DS_Store

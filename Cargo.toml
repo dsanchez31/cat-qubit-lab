@@ -1,0 +1,42 @@
+[workspace]
+resolver = "3"
+members = ["crates/physics", "crates/physics-wasm"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "Apache-2.0"
+repository = "https://github.com/dsanchez31/cat-qubit-lab"
+homepage = "https://dsanchez31.github.io/cat-qubit-lab/"
+
+[workspace.dependencies]
+cat-qubit-physics = { path = "crates/physics" }
+num-complex = "=0.4.6"
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+wasm-bindgen = "=0.2.129"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Index arithmetic on Fock levels converts between usize and f64 by design.
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+many_single_char_names = "allow"
+similar_names = "allow"
+must_use_candidate = "allow"
+# Exact zero tests (pivots, empty rates) are intentional.
+float_cmp = "allow"
+# Physics names (WebAssembly, WebGPU, dynamiqs) appear in prose, not as code.
+doc_markdown = "allow"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
