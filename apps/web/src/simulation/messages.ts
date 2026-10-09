@@ -23,6 +23,22 @@ export interface WignerRequest {
   extent: number;
 }
 
+/** Known state used to validate the WebGPU Wigner evaluation against the CPU one. */
+export interface GpuSelfTestRequest {
+  dimension: number;
+  /** Amplitude of the odd cat state |α⟩ − |−α⟩, α real. */
+  alpha: number;
+  resolution: number;
+  extent: number;
+}
+
+export interface GpuSelfTestReference extends GpuSelfTestRequest {
+  /** Interleaved [re, im] pairs, row-major. */
+  densityMatrix: Float32Array;
+  /** CPU Wigner values on the requested grid. */
+  wigner: Float32Array;
+}
+
 export type WorkerCommand =
   | { type: "configure"; parameters: CatParameters; dimension: number }
   | { type: "reset"; state: InitialState }
@@ -30,6 +46,8 @@ export type WorkerCommand =
   | { type: "pause" }
   /** Asks the worker to also compute the Wigner function on the CPU (no WebGPU). */
   | { type: "cpuWigner"; request: WignerRequest | null }
+  /** Asks for the density matrix and CPU Wigner values of the GPU self-test state. */
+  | { type: "gpuSelfTest"; requestId: number; request: GpuSelfTestRequest }
   | {
       type: "flipTimes";
       requestId: number;
@@ -52,6 +70,13 @@ export interface Frame {
 export type WorkerEvent =
   | { type: "ready" }
   | { type: "frame"; frame: Frame }
+  | {
+      type: "gpuSelfTest";
+      requestId: number;
+      /** Null when the worker failed to build the reference, `error` then says why. */
+      reference: GpuSelfTestReference | null;
+      error?: string;
+    }
   | {
       type: "flipTimes";
       requestId: number;

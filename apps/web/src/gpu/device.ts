@@ -1,8 +1,20 @@
+export interface GpuContext {
+  device: GPUDevice;
+  /** "vendor architecture device (description)", for logs and diagnostics. */
+  adapterLabel: string;
+}
+
+function describeAdapter(adapter: GPUAdapter): string {
+  const { vendor, architecture, device, description } = adapter.info;
+  const name = [vendor, architecture, device].filter(Boolean).join(" ") || "unknown adapter";
+  return description ? `${name} (${description})` : name;
+}
+
 /**
  * Requests a WebGPU device, or resolves to null when the browser has no WebGPU support or no
  * suitable adapter. Callers fall back to the CPU Wigner computation in that case.
  */
-export async function requestGpuDevice(): Promise<GPUDevice | null> {
+export async function requestGpuDevice(): Promise<GpuContext | null> {
   if (!("gpu" in navigator)) {
     return null;
   }
@@ -15,7 +27,12 @@ export async function requestGpuDevice(): Promise<GPUDevice | null> {
     device.lost.then((info) => {
       console.warn(`WebGPU device lost: ${info.message}`);
     });
-    return device;
+    const adapterLabel = describeAdapter(adapter);
+    console.info(`WebGPU adapter: ${adapterLabel}`, {
+      features: Array.from(adapter.features).sort(),
+      isFallbackAdapter: adapter.info.isFallbackAdapter,
+    });
+    return { device, adapterLabel };
   } catch (error) {
     console.warn("WebGPU unavailable, using the CPU fallback", error);
     return null;
