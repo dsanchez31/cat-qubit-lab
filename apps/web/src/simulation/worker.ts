@@ -15,6 +15,8 @@ let speed = 0;
 let wignerRequest: WignerRequest | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let lastTick = 0;
+/** Id of the newest flip-time sweep; an older sweep still running stops at its next point. */
+let latestFlipRequest = 0;
 
 function post(event: WorkerEvent, transfer: Transferable[] = []) {
   scope.postMessage(event, transfer);
@@ -137,22 +139,38 @@ function handle(command: WorkerCommand) {
       }
       break;
     }
-    case "flipTimes": {
-      const { requestId, alphas, kappa1, kappa2, kappaPhi } = command;
-      const pairs = flipTimes(alphas, kappa1, kappa2, kappaPhi);
-      const bitFlip = new Float64Array(alphas.length);
-      const phaseFlip = new Float64Array(alphas.length);
-      for (let i = 0; i < alphas.length; i++) {
-        bitFlip[i] = pairs[2 * i] ?? Number.POSITIVE_INFINITY;
-        phaseFlip[i] = pairs[2 * i + 1] ?? Number.POSITIVE_INFINITY;
-      }
-      post({ type: "flipTimes", requestId, alphas, bitFlip, phaseFlip }, [
-        bitFlip.buffer,
-        phaseFlip.buffer,
-      ]);
+    case "flipTimes":
+      latestFlipRequest = command.requestId;
+      sweepFlipTimes(command).catch(postError);
       break;
-    }
   }
+}
+
+/**
+ * Computes the sweep one point at a time and streams each point. Yielding to the event loop
+ * between points lets a newer request arrive and abort this one, instead of queueing behind it.
+ */
+async function sweepFlipTimes(command: Extract<WorkerCommand, { type: "flipTimes" }>) {
+  const { requestId, alphas, kappa1, kappa2, kappaPhi } = command;
+  for (let index = 0; index < alphas.length; index++) {
+    if (latestFlipRequest !== requestId) {
+      return;
+    }
+    const pair = flipTimes(alphas.subarray(index, index + 1), kappa1, kappa2, kappaPhi);
+    post({
+      type: "flipTimesPoint",
+      requestId,
+      index,
+      total: alphas.length,
+      bitFlip: pair[0] ?? Number.POSITIVE_INFINITY,
+      phaseFlip: pair[1] ?? Number.POSITIVE_INFINITY,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+}
+
+function postError(error: unknown) {
+  post({ type: "error", message: error instanceof Error ? error.message : String(error) });
 }
 
 scope.onmessage = async (event: MessageEvent<WorkerCommand>) => {
@@ -160,7 +178,7 @@ scope.onmessage = async (event: MessageEvent<WorkerCommand>) => {
     await ready;
     handle(event.data);
   } catch (error) {
-    post({ type: "error", message: error instanceof Error ? error.message : String(error) });
+    postError(error);
   }
 };
 

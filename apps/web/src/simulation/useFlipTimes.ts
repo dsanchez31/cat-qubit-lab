@@ -8,32 +8,59 @@ export interface FlipTimesCurve {
   alphas: Float64Array;
   bitFlip: Float64Array;
   phaseFlip: Float64Array;
+  /** Points already computed, from index 0; the curve is complete when it equals `alphas.length`. */
+  computed: number;
+}
+
+interface Sweep {
+  curve: FlipTimesCurve | null;
+  /** Last complete curve, kept on screen while `curve` is being computed. */
+  previous: FlipTimesCurve | null;
 }
 
 type Rates = Pick<CatParameters, "kappa1" | "kappa2" | "kappaPhi">;
 
+export function isComplete(curve: FlipTimesCurve | null): boolean {
+  return curve !== null && curve.computed === curve.alphas.length;
+}
+
+function emptyCurve(alphas: Float64Array): FlipTimesCurve {
+  return {
+    alphas,
+    bitFlip: new Float64Array(alphas.length).fill(Number.NaN),
+    phaseFlip: new Float64Array(alphas.length).fill(Number.NaN),
+    computed: 0,
+  };
+}
+
 /**
  * Bit-flip and phase-flip times over `alphas`, recomputed in a dedicated worker so that the sweep
- * never stalls the time evolution.
+ * never stalls the time evolution. Points stream in one by one; a parameter change abandons the
+ * running sweep.
  */
 export function useFlipTimes(alphas: Float64Array, rates: Rates) {
   const workerRef = useRef<Worker | null>(null);
   const latestRequest = useRef(0);
-  const [curve, setCurve] = useState<FlipTimesCurve | null>(null);
-  const [pending, setPending] = useState(false);
+  const [sweep, setSweep] = useState<Sweep>({ curve: null, previous: null });
 
   useEffect(() => {
     const worker = createWorker();
     worker.onmessage = (event: MessageEvent<WorkerEvent>) => {
       const message = event.data;
-      if (message.type === "flipTimes" && message.requestId === latestRequest.current) {
-        setCurve({
-          alphas: message.alphas,
-          bitFlip: message.bitFlip,
-          phaseFlip: message.phaseFlip,
-        });
-        setPending(false);
+      if (message.type !== "flipTimesPoint" || message.requestId !== latestRequest.current) {
+        return;
       }
+      setSweep(({ curve, previous }) => {
+        if (!curve) {
+          return { curve, previous };
+        }
+        const bitFlip = curve.bitFlip.slice();
+        const phaseFlip = curve.phaseFlip.slice();
+        bitFlip[message.index] = message.bitFlip;
+        phaseFlip[message.index] = message.phaseFlip;
+        const next = { alphas: curve.alphas, bitFlip, phaseFlip, computed: message.index + 1 };
+        return { curve: next, previous: isComplete(next) ? null : previous };
+      });
     };
     workerRef.current = worker;
     return () => {
@@ -44,12 +71,17 @@ export function useFlipTimes(alphas: Float64Array, rates: Rates) {
 
   const { kappa1, kappa2, kappaPhi } = rates;
   useEffect(() => {
-    setPending(true);
+    // Bumped right away so that points of a sweep still running are ignored from now on.
+    latestRequest.current += 1;
+    const requestId = latestRequest.current;
+    setSweep(({ curve, previous }) => ({
+      curve: emptyCurve(alphas),
+      previous: isComplete(curve) ? curve : previous,
+    }));
     const handle = setTimeout(() => {
-      latestRequest.current += 1;
       workerRef.current?.postMessage({
         type: "flipTimes",
-        requestId: latestRequest.current,
+        requestId,
         alphas,
         kappa1,
         kappa2,
@@ -59,5 +91,8 @@ export function useFlipTimes(alphas: Float64Array, rates: Rates) {
     return () => clearTimeout(handle);
   }, [alphas, kappa1, kappa2, kappaPhi]);
 
-  return { curve, pending };
+  const { curve, previous } = sweep;
+  const progress =
+    curve && !isComplete(curve) ? { done: curve.computed, total: curve.alphas.length } : null;
+  return { curve, previous, progress };
 }

@@ -48,3 +48,9 @@ export const GlowIcon = () => (
     <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" />
   </Icon>
 );
+
+export const SpinnerIcon = () => (
+  <Icon className="size-3 motion-safe:animate-spin">
+    <path d="M12 3a9 9 0 1 1-9 9" strokeWidth={2.5} />
+  </Icon>
+);
