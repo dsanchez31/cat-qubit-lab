@@ -77,11 +77,14 @@ export type WorkerEvent =
       reference: GpuSelfTestReference | null;
       error?: string;
     }
+  /** One point of a flip-time sweep, streamed in ascending `index` order. */
   | {
-      type: "flipTimes";
+      type: "flipTimesPoint";
       requestId: number;
-      alphas: Float64Array;
-      bitFlip: Float64Array;
-      phaseFlip: Float64Array;
+      index: number;
+      total: number;
+      /** `Infinity` marks an absent error channel or a rate below the solver resolution. */
+      bitFlip: number;
+      phaseFlip: number;
     }
   | { type: "error"; message: string };

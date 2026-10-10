@@ -46,7 +46,7 @@ export function useSimulation() {
           }
           break;
         }
-        case "flipTimes":
+        case "flipTimesPoint":
           break;
       }
     };

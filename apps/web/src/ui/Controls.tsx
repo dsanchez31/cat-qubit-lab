@@ -5,6 +5,7 @@ interface ControlsProps {
   parameters: CatParameters;
   dimension: number;
   recommendedDimension: number;
+  maxAlpha: number;
   observables: Observables | null;
   onParametersChange: (parameters: CatParameters) => void;
   onDimensionChange: (dimension: number) => void;
@@ -15,6 +16,7 @@ export function Controls({
   parameters,
   dimension,
   recommendedDimension,
+  maxAlpha,
   observables,
   onParametersChange,
   onDimensionChange,
@@ -50,7 +52,7 @@ export function Controls({
           label="Amplitude α"
           value={alpha}
           min={0}
-          max={2.8}
+          max={maxAlpha}
           step={0.01}
           onChange={(value) => update({ alpha: value })}
           format={(value) => `${value.toFixed(2)} · |α|² ${(value * value).toFixed(1)}`}
@@ -71,30 +73,23 @@ export function Controls({
           allowZero
           onChange={(value) => update({ kappa1: value })}
         />
-        <details className="group">
-          <summary className="cursor-pointer list-none text-xs text-slate-50 hover:text-paper">
-            <span className="inline-block transition group-open:rotate-90">›</span> Advanced
-          </summary>
-          <div className="mt-3 space-y-3">
-            <LogSlider
-              label="Dephasing κφ"
-              value={parameters.kappaPhi}
-              minExponent={-4}
-              maxExponent={-1}
-              allowZero
-              onChange={(value) => update({ kappaPhi: value })}
-            />
-            <Slider
-              label="Fock truncation N"
-              value={dimension}
-              min={10}
-              max={50}
-              step={1}
-              onChange={onDimensionChange}
-              hint={`Recommended: ${recommendedDimension}. Changing N restarts the state.`}
-            />
-          </div>
-        </details>
+        <LogSlider
+          label="Dephasing κφ"
+          value={parameters.kappaPhi}
+          minExponent={-4}
+          maxExponent={-1}
+          allowZero
+          onChange={(value) => update({ kappaPhi: value })}
+        />
+        <Slider
+          label="Fock truncation N"
+          value={dimension}
+          min={10}
+          max={50}
+          step={1}
+          onChange={onDimensionChange}
+          hint={`Recommended: ${recommendedDimension}. Changing N restarts the state.`}
+        />
         <p className="text-[11px] text-slate-50">Rates in 1/τ, times in τ (arbitrary time unit).</p>
       </div>
 

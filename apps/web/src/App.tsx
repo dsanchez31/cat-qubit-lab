@@ -10,12 +10,14 @@ import { useSimulation } from "./simulation/useSimulation";
 import { Controls } from "./ui/Controls";
 import { Dock } from "./ui/Dock";
 import { FlipPlot } from "./ui/FlipPlot";
+import { SpinnerIcon } from "./ui/icons";
 import { Panel } from "./ui/Panel";
 import { StatusPill } from "./ui/StatusPill";
 import { type TutorialStep, tutorialSteps } from "./ui/steps";
 import { Tutorial } from "./ui/Tutorial";
 import { useMediaQuery } from "./ui/useMediaQuery";
 
+const MAX_ALPHA = 2.8;
 const MAX_ALPHA_SQUARED = 8;
 /** |α|² = 0.5, 1, …, 8: each point costs up to ~0.5 s with the converged flip-time truncation. */
 const ALPHA_SWEEP = Float64Array.from({ length: 16 }, (_, i) => Math.sqrt(0.5 * (i + 1)));
@@ -59,7 +61,7 @@ export function App() {
 
   const extent = phaseSpaceExtent(parameters, reset.state);
   const { backend, gpuRejected, field } = useWignerField(frame, extent, requestGpuSelfTest);
-  const { curve, pending } = useFlipTimes(ALPHA_SWEEP, parameters);
+  const { curve, previous, progress } = useFlipTimes(ALPHA_SWEEP, parameters);
 
   useEffect(() => {
     if (ready) {
@@ -87,6 +89,10 @@ export function App() {
       send({ type: "cpuWigner", request: { resolution: GPU_RESOLUTION, extent } });
     }
   }, [ready, backend, extent, send]);
+
+  const setAlpha = useCallback((alpha: number) => {
+    setParameters((previous) => ({ ...previous, alpha }));
+  }, []);
 
   const resetTo = useCallback((state: InitialState) => {
     setReset((previous) => ({ state, token: previous.token + 1 }));
@@ -169,6 +175,7 @@ export function App() {
               parameters={parameters}
               dimension={dimension}
               recommendedDimension={recommendedDimension(parameters.alpha)}
+              maxAlpha={MAX_ALPHA}
               observables={frame?.observables ?? null}
               onParametersChange={setParameters}
               onDimensionChange={setDimension}
@@ -177,9 +184,25 @@ export function App() {
           </Panel>
           <Panel
             title="Flip times (τ)"
-            aside={pending && <span className="text-[11px] text-slate-50">computing…</span>}
+            aside={
+              progress && (
+                <span className="flex items-center gap-1.5 font-mono text-[11px] text-signal tabular-nums">
+                  <SpinnerIcon />
+                  computing {progress.done}/{progress.total}
+                </span>
+              )
+            }
           >
-            <FlipPlot curve={curve} alpha={parameters.alpha} maxAlphaSquared={MAX_ALPHA_SQUARED} />
+            <FlipPlot
+              curve={curve}
+              previous={previous}
+              progress={progress}
+              rates={parameters}
+              alpha={parameters.alpha}
+              maxAlpha={MAX_ALPHA}
+              maxAlphaSquared={MAX_ALPHA_SQUARED}
+              onAlphaChange={setAlpha}
+            />
           </Panel>
         </aside>
 

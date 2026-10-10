@@ -10,12 +10,15 @@ main thread (React)                     simulation worker            flip-times 
     ├─ GPU: WignerPipeline (WebGPU) ─▶ Float32Array
     └─ CPU: frame.wigner (computed by the worker)
   WignerSurface (three.js mesh)
-  FlipPlot ◀────────────────────────────────────────────────── flipTimes(alphas)
+  FlipPlot ◀──────────────────────────────────────── flipTimesPoint, one α at a time
 ```
 
 The physics runs in **Web Workers** so the page never freezes. Two workers are created from the same
 script (`apps/web/src/simulation/worker.ts`): one evolves the state, the other computes flip-time
-sweeps, which take up to a second and would otherwise stall the animation.
+sweeps, which take several seconds and would otherwise stall the animation. The sweep runs one `α`
+at a time and posts each point as a `flipTimesPoint` event, so the curve draws itself while it is
+computed. Between points the worker yields to its event loop: a newer request (a `κ` slider moved)
+then aborts the stale sweep instead of queueing behind it.
 
 ## From a slider to the screen
 
